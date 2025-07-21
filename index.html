@@ -1,50 +1,103 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-    <meta charset="UTF-8">
-    <title>نمایش حجم فایل MEGA</title>
+    <meta charset="UTF-8" />
+    <title>تبدیل لینک گوگل درایو به لینک مستقیم</title>
     <style>
-        body { direction: rtl; font-family: Tahoma; background: #eef2fa; }
-        .main {
-            max-width: 400px; margin: 60px auto; background: #fff;
-            padding: 36px; border-radius: 16px;
-            box-shadow: 0 2px 10px #aac5;
+        body {
+            direction: rtl;
+            font-family: Tahoma, Arial, sans-serif;
+            max-width: 480px;
+            margin: 40px auto;
+            background: #f9faff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 14px #ccc;
             text-align: center;
         }
         input[type="text"] {
-            width: 90%; padding: 10px;
-            border-radius: 7px; border: 1px solid #aaa; margin-bottom: 20px;
+            width: 90%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #999;
+            margin-bottom: 20px;
+            direction: ltr;
         }
         button {
-            background: #1e88e5; color: white;
-            padding: 10px 28px; border-radius: 8px;
-            border: none; font-size: 16px; cursor: pointer;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
         }
-        .result { margin-top: 20px; font-size: 15px; color: #777; }
-        a.tool { color: #4186f7; text-decoration: none;}
+        button:hover {
+            background-color: #155ab6;
+        }
+        .result {
+            margin-top: 28px;
+            font-size: 16px;
+            word-break: break-all;
+            background: #e1eaff;
+            padding: 12px;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
-    <div class="main">
-        <h2>گرفتن حجم فایل MEGA</h2>
-        <input type="text" id="megaLink" placeholder="لینک مستقیم MEGA.nz را وارد کنید">
-        <br>
-        <button onclick="showHelp()">بررسی حجم فایل</button>
-        <div class="result" id="result"></div>
-    </div>
+    <h2>تبدیل لینک گوگل درایو به لینک مستقیم دانلود</h2>
+    <input 
+        type="text" 
+        id="inputLink" 
+        placeholder="لینک اشتراک گذاری گوگل درایو را اینجا قرار دهید"
+        autocomplete="off"
+    />
+    <br />
+    <button onclick="generateDirectLink()">ایجاد لینک مستقیم</button>
+
+    <div class="result" id="result"></div>
+
     <script>
-    function showHelp() {
-        let url = document.getElementById('megaLink').value.trim();
-        if(!/^https:\/\/mega\.nz\/file\//.test(url)) {
-            document.getElementById('result').textContent = 'لینک معتبر MEGA وارد نشده است.';
-            return;
+        function generateDirectLink() {
+            const input = document.getElementById('inputLink').value.trim();
+            const resultDiv = document.getElementById('result');
+
+            if (!input) {
+                resultDiv.textContent = 'لطفا لینک اشتراک گذاری گوگل درایو را وارد کنید.';
+                return;
+            }
+
+            // استخراج شناسه فایل از لینک ورودی
+            // نمونه لینک معمول: 
+            // https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+            // یا https://drive.google.com/open?id=FILE_ID
+
+            let fileId = null;
+            const patterns = [
+                /\/file\/d\/([a-zA-Z0-9_-]+)/,  // حالت معمول
+                /id=([a-zA-Z0-9_-]+)/           // حالت open?id=FILE_ID
+            ];
+
+            for (const pattern of patterns) {
+                const match = input.match(pattern);
+                if (match && match[1]) {
+                    fileId = match[1];
+                    break;
+                }
+            }
+
+            if (!fileId) {
+                resultDiv.textContent = 'لینک وارد شده معتبر نیست یا شناسه فایل یافت نشد.';
+                return;
+            }
+
+            // ساخت لینک دانلود مستقیم
+            const directLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+            // نمایش لینک به کاربر به صورت قابل کلیک
+            resultDiv.innerHTML = `لینک مستقیم دانلود:<br><a href="${directLink}" target="_blank" rel="noopener noreferrer">${directLink}</a>`;
         }
-        document.getElementById('result').innerHTML =
-            'در حال حاضر امکان دریافت حجم فایل MEGA با مرورگر وجود ندارد.<br>'+
-            'اما می‌توانید با این ابزارها حجم فایل را مشاهده کنید:<br>'+
-            '<a class="tool" target="_blank" href="https://megachecker.net/">Mega Checker</a> یا '+
-            '<a class="tool" target="_blank" href="https://www.mega-info.com/">Mega Info</a>';
-    }
     </script>
 </body>
 </html>
