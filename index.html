@@ -1,104 +1,111 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-    <meta charset="UTF-8" />
-    <title>لیست لینک‌های گوگل درایو</title>
-    <style>
-        body {
-            direction: rtl;
-            font-family: Tahoma, Arial, sans-serif;
-            max-width: 500px;
-            margin: 40px auto;
-            background: #f9faff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 0 14px #ccc;
-            text-align: right;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: 1px solid #999;
-            margin-bottom: 20px;
-            direction: ltr;
-        }
-        button {
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            padding: 12px 28px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #155ab6;
-        }
-        ul {
-            margin-top: 30px;
-            padding-right: 0;
-            list-style: none;
-        }
-        li {
-            background-color: #e1eaff;
-            margin-bottom: 10px;
-            padding: 12px 14px;
-            border-radius: 8px;
-            word-break: break-all;
-        }
-        a {
-            color: #1a0dab;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>تبدیل لینک YouTube به لینک نمایش مستقیم</title>
+  <style>
+    body {
+      direction: rtl;
+      font-family: Tahoma, Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      background: #f9faff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 14px #ccc;
+      text-align: center;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #999;
+      margin-bottom: 20px;
+      direction: ltr;
+    }
+    button {
+      background-color: #ff0000;
+      color: white;
+      border: none;
+      padding: 12px 28px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+    button:hover {
+      background-color: #cc0000;
+    }
+    iframe {
+      width: 100%;
+      height: 360px;
+      border: none;
+      border-radius: 12px;
+    }
+    .error {
+      color: #cc0000;
+      font-weight: bold;
+      margin-top: 12px;
+    }
+  </style>
 </head>
 <body>
-    <h2>افزودن لینک‌های گوگل درایو به لیست</h2>
-    <input type="text" id="driveLinkInput" placeholder="لینک گوگل درایو را وارد کنید" />
-    <button onclick="addLink()">افزودن به لیست</button>
+  <h2>تبدیل لینک YouTube به لینک پخش مستقیم</h2>
+  <input type="text" id="youtubeUrl" placeholder="لینک ویدیوی YouTube را وارد کنید" />
+  <button onclick="embedVideo()">نمایش ویدیو</button>
 
-    <ul id="linkList"></ul>
+  <div id="videoContainer"></div>
+  <div id="errorMsg" class="error"></div>
 
-    <script>
-        function isValidGoogleDriveLink(url) {
-            // بررسی ابتدایی معتبر بودن لینک گوگل درایو
-            return /https:\/\/(drive\.google\.com|docs\.google\.com)\/.+/.test(url);
+  <script>
+    function embedVideo() {
+      const url = document.getElementById('youtubeUrl').value.trim();
+      const videoContainer = document.getElementById('videoContainer');
+      const errorMsg = document.getElementById('errorMsg');
+      videoContainer.innerHTML = '';
+      errorMsg.textContent = '';
+
+      if (!url) {
+        errorMsg.textContent = 'لطفا یک لینک معتبر وارد کنید.';
+        return;
+      }
+
+      // استخراج شناسه ویدیو از لینک
+      let videoId = null;
+
+      // حالت‌های ممکن لینک:
+      // https://www.youtube.com/watch?v=VIDEO_ID
+      // https://youtu.be/VIDEO_ID
+      // https://www.youtube.com/embed/VIDEO_ID
+      const patterns = [
+        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+        /(?:https?:\/\/)?youtu\.be\/([a-zA-Z0-9_-]{11})/,
+        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+      ];
+
+      for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match && match[1]) {
+          videoId = match[1];
+          break;
         }
+      }
 
-        function addLink() {
-            const input = document.getElementById('driveLinkInput');
-            const link = input.value.trim();
-            const list = document.getElementById('linkList');
+      if (!videoId) {
+        errorMsg.textContent = 'لینک وارد شده معتبر نیست.';
+        return;
+      }
 
-            if (!link) {
-                alert('لطفا لینک را وارد کنید.');
-                return;
-            }
-            if (!isValidGoogleDriveLink(link)) {
-                alert('لینک وارد شده، لینک گوگل درایو معتبر نیست.');
-                return;
-            }
+      // ایجاد iframe برای نمایش ویدیو
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://www.youtube.com/embed/${videoId}`;
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      iframe.allowFullscreen = true;
 
-            // ایجاد عنصر لیست با لینک قابل کلیک
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            a.href = link;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.textContent = link;
-
-            li.appendChild(a);
-            list.appendChild(li);
-
-            input.value = '';
-            input.focus();
-        }
-    </script>
+      videoContainer.appendChild(iframe);
+    }
+  </script>
 </body>
 </html>
