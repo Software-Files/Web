@@ -1,111 +1,55 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-  <meta charset="UTF-8" />
-  <title>تبدیل لینک YouTube به لینک نمایش مستقیم</title>
-  <style>
-    body {
-      direction: rtl;
-      font-family: Tahoma, Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      background: #f9faff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 14px #ccc;
-      text-align: center;
+const express = require('express');
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
+const app = express();
+const PORT = 3000;
+
+// صفحه اصلی پروکسی
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Web Proxy</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        input { padding: 10px; width: 70%; margin-right: 10px; }
+        button { padding: 10px 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>Web Proxy Service</h1>
+        <form action="/proxy" method="GET">
+          <input type="url" name="url" placeholder="https://example.com" required>
+          <button type="submit">Browse</button>
+        </form>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
+// میدلور پروکسی
+app.use('/proxy', createProxyMiddleware({
+  target: 'http://example.com', // مقدار پیش‌فرض
+  changeOrigin: true,
+  pathRewrite: (path, req) => {
+    const targetUrl = req.query.url;
+    if(targetUrl) {
+      return new URL(targetUrl).pathname;
     }
-    input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #999;
-      margin-bottom: 20px;
-      direction: ltr;
-    }
-    button {
-      background-color: #ff0000;
-      color: white;
-      border: none;
-      padding: 12px 28px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-      margin-bottom: 24px;
-    }
-    button:hover {
-      background-color: #cc0000;
-    }
-    iframe {
-      width: 100%;
-      height: 360px;
-      border: none;
-      border-radius: 12px;
-    }
-    .error {
-      color: #cc0000;
-      font-weight: bold;
-      margin-top: 12px;
-    }
-  </style>
-</head>
-<body>
-  <h2>تبدیل لینک YouTube به لینک پخش مستقیم</h2>
-  <input type="text" id="youtubeUrl" placeholder="لینک ویدیوی YouTube را وارد کنید" />
-  <button onclick="embedVideo()">نمایش ویدیو</button>
+    return path;
+  },
+  router: (req) => {
+    return req.query.url ? new URL(req.query.url).origin : null;
+  },
+  onProxyRes: (proxyRes) => {
+    proxyRes.headers['access-control-allow-origin'] = '*';
+  }
+}));
 
-  <div id="videoContainer"></div>
-  <div id="errorMsg" class="error"></div>
-
-  <script>
-    function embedVideo() {
-      const url = document.getElementById('youtubeUrl').value.trim();
-      const videoContainer = document.getElementById('videoContainer');
-      const errorMsg = document.getElementById('errorMsg');
-      videoContainer.innerHTML = '';
-      errorMsg.textContent = '';
-
-      if (!url) {
-        errorMsg.textContent = 'لطفا یک لینک معتبر وارد کنید.';
-        return;
-      }
-
-      // استخراج شناسه ویدیو از لینک
-      let videoId = null;
-
-      // حالت‌های ممکن لینک:
-      // https://www.youtube.com/watch?v=VIDEO_ID
-      // https://youtu.be/VIDEO_ID
-      // https://www.youtube.com/embed/VIDEO_ID
-      const patterns = [
-        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
-        /(?:https?:\/\/)?youtu\.be\/([a-zA-Z0-9_-]{11})/,
-        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-      ];
-
-      for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match && match[1]) {
-          videoId = match[1];
-          break;
-        }
-      }
-
-      if (!videoId) {
-        errorMsg.textContent = 'لینک وارد شده معتبر نیست.';
-        return;
-      }
-
-      // ایجاد iframe برای نمایش ویدیو
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://www.youtube.com/embed/${videoId}`;
-      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-      iframe.allowFullscreen = true;
-
-      videoContainer.appendChild(iframe);
-    }
-  </script>
-</body>
-</html>
+app.listen(PORT, () => {
+  console.log(`Proxy server running on http://localhost:${PORT}`);
+});
