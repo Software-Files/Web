@@ -1,55 +1,740 @@
-const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-
-const app = express();
-const PORT = 3000;
-
-// صفحه اصلی پروکسی
-app.get('/', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Web Proxy</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        input { padding: 10px; width: 70%; margin-right: 10px; }
-        button { padding: 10px 20px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>Web Proxy Service</h1>
-        <form action="/proxy" method="GET">
-          <input type="url" name="url" placeholder="https://example.com" required>
-          <button type="submit">Browse</button>
-        </form>
-      </div>
-    </body>
-    </html>
-  `);
-});
-
-// میدلور پروکسی
-app.use('/proxy', createProxyMiddleware({
-  target: 'http://example.com', // مقدار پیش‌فرض
-  changeOrigin: true,
-  pathRewrite: (path, req) => {
-    const targetUrl = req.query.url;
-    if(targetUrl) {
-      return new URL(targetUrl).pathname;
-    }
-    return path;
-  },
-  router: (req) => {
-    return req.query.url ? new URL(req.query.url).origin : null;
-  },
-  onProxyRes: (proxyRes) => {
-    proxyRes.headers['access-control-allow-origin'] = '*';
-  }
-}));
-
-app.listen(PORT, () => {
-  console.log(`Proxy server running on http://localhost:${PORT}`);
-});
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دانلود منیجر پیشرفته</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .main-panel {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .add-download {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            flex: 1;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .add-download h2 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #4dabf7;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .btn {
+            padding: 14px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: #4dabf7;
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            background: #339af0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stats {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            flex: 0.6;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats h2 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-card .value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 10px 0;
+            color: #4dabf7;
+        }
+        
+        .stat-card .label {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .download-list {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .download-list h2 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .download-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .download-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+        }
+        
+        .file-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(77, 171, 247, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .file-size {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .progress-container {
+            flex: 2;
+            padding: 0 20px;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4dabf7, #339af0);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        
+        .download-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .action-btn.pause {
+            color: #ffd43b;
+        }
+        
+        .action-btn.cancel {
+            color: #ff6b6b;
+        }
+        
+        .action-btn.remove {
+            color: #adb5bd;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .speed-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.85rem;
+        }
+        
+        .status {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: rgba(77, 171, 247, 0.2);
+            display: inline-block;
+        }
+        
+        @media (max-width: 768px) {
+            .main-panel {
+                flex-direction: column;
+            }
+            
+            .download-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .file-icon {
+                margin-left: 0;
+                margin-bottom: 15px;
+            }
+            
+            .progress-container {
+                width: 100%;
+                padding: 15px 0;
+            }
+            
+            .download-actions {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-cloud-download-alt"></i> دانلود منیجر پیشرفته</h1>
+            <p>مدیریت حرفه‌ای دانلودهای شما با رابط کاربری مدرن و امکانات پیشرفته</p>
+        </header>
+        
+        <div class="main-panel">
+            <div class="add-download">
+                <h2><i class="fas fa-plus-circle"></i> افزودن دانلود جدید</h2>
+                <div class="input-group">
+                    <label for="url">لینک دانلود (URL)</label>
+                    <input type="url" id="url" placeholder="https://example.com/file.zip">
+                </div>
+                <div class="input-group">
+                    <label for="filename">نام فایل (اختیاری)</label>
+                    <input type="text" id="filename" placeholder="نام فایل مورد نظر">
+                </div>
+                <button class="btn btn-primary" id="add-btn">
+                    <i class="fas fa-download"></i> شروع دانلود
+                </button>
+            </div>
+            
+            <div class="stats">
+                <h2><i class="fas fa-chart-line"></i> آمار دانلود</h2>
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="value">12</div>
+                        <div class="label">دانلودهای فعال</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">3.4</div>
+                        <div class="label">میانگین سرعت (MB/s)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">78</div>
+                        <div class="label">کل دانلودها</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">246</div>
+                        <div class="label">حجم کل (GB)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="download-list">
+            <h2><i class="fas fa-list"></i> لیست دانلودها</h2>
+            
+            <div class="download-item">
+                <div class="file-icon">
+                    <i class="fas fa-file-video"></i>
+                </div>
+                <div class="file-info">
+                    <div class="file-name">آموزش برنامه‌نویسی پیشرفته.mp4</div>
+                    <div class="file-size">حجم: 1.2 GB</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-info">
+                        <span>68%</span>
+                        <span class="status">در حال دانلود</span>
+                        <span>4.2 MB/s</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 68%"></div>
+                    </div>
+                    <div class="speed-info">
+                        <span>دانلود شده: 816 MB</span>
+                        <span>زمان باقیمانده: 02:15</span>
+                    </div>
+                </div>
+                <div class="download-actions">
+                    <button class="action-btn pause" title="توقف">
+                        <i class="fas fa-pause"></i>
+                    </button>
+                    <button class="action-btn cancel" title="لغو">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="download-item">
+                <div class="file-icon">
+                    <i class="fas fa-file-archive"></i>
+                </div>
+                <div class="file-info">
+                    <div class="file-name">project-source-code.zip</div>
+                    <div class="file-size">حجم: 450 MB</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-info">
+                        <span>100%</span>
+                        <span class="status">تکمیل شده</span>
+                        <span>0 MB/s</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                    <div class="speed-info">
+                        <span>دانلود شده: 450 MB</span>
+                        <span>تکمیل شده در: ۱۴۰۲/۰۵/۱۵</span>
+                    </div>
+                </div>
+                <div class="download-actions">
+                    <button class="action-btn remove" title="حذف">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="download-item">
+                <div class="file-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="file-info">
+                    <div class="file-name">راهنمای نرم‌افزار.pdf</div>
+                    <div class="file-size">حجم: 85 MB</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-info">
+                        <span>32%</span>
+                        <span class="status">متوقف شده</span>
+                        <span>0 MB/s</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 32%"></div>
+                    </div>
+                    <div class="speed-info">
+                        <span>دانلود شده: 27.2 MB</span>
+                        <span>زمان باقیمانده: نامعلوم</span>
+                    </div>
+                </div>
+                <div class="download-actions">
+                    <button class="action-btn pause" title="ادامه">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="action-btn cancel" title="لغو">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© ۲۰۲۳ دانلود منیجر پیشرفته - نسخه ۲.۰ | طراحی شده با <i class="fas fa-heart" style="color: #ff6b6b;"></i></p>
+        </footer>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // افزودن دانلود جدید
+            document.getElementById('add-btn').addEventListener('click', function() {
+                const urlInput = document.getElementById('url');
+                const filenameInput = document.getElementById('filename');
+                
+                if(urlInput.value.trim() === '') {
+                    alert('لطفا لینک دانلود را وارد کنید');
+                    return;
+                }
+                
+                // ایجاد دانلود جدید
+                const newDownload = createDownloadItem(
+                    filenameInput.value || extractFilenameFromUrl(urlInput.value),
+                    getRandomSize(),
+                    'در حال دانلود'
+                );
+                
+                // افزودن به لیست
+                const downloadList = document.querySelector('.download-list');
+                downloadList.insertBefore(newDownload, downloadList.querySelector('.download-item'));
+                
+                // شروع شبیه‌سازی پیشرفت
+                simulateDownload(newDownload);
+                
+                // پاک کردن فیلدها
+                urlInput.value = '';
+                filenameInput.value = '';
+            });
+            
+            // ایجاد آیتم دانلود جدید
+            function createDownloadItem(name, size, status) {
+                const item = document.createElement('div');
+                item.className = 'download-item';
+                
+                // تعیین آیکون بر اساس نوع فایل
+                const ext = name.split('.').pop().toLowerCase();
+                const icon = getFileIcon(ext);
+                
+                // تعیین درصد پیشرفت اولیه
+                let progress = 0;
+                let downloaded = '0 MB';
+                if(status === 'تکمیل شده') {
+                    progress = 100;
+                    downloaded = size;
+                } else if(status === 'متوقف شده') {
+                    progress = Math.floor(Math.random() * 60);
+                    downloaded = formatSize(parseSize(size) * (progress/100));
+                }
+                
+                item.innerHTML = `
+                    <div class="file-icon">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${name}</div>
+                        <div class="file-size">حجم: ${size}</div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-info">
+                            <span>${progress}%</span>
+                            <span class="status">${status}</span>
+                            <span>0 MB/s</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="speed-info">
+                            <span>دانلود شده: ${downloaded}</span>
+                            <span>${status === 'تکمیل شده' ? 'تکمیل شده در: ' + getCurrentDate() : 'زمان باقیمانده: نامعلوم'}</span>
+                        </div>
+                    </div>
+                    <div class="download-actions">
+                        <button class="action-btn ${status === 'تکمیل شده' ? 'remove' : 'pause'}" title="${status === 'تکمیل شده' ? 'حذف' : status === 'در حال دانلود' ? 'توقف' : 'ادامه'}">
+                            <i class="fas ${status === 'تکمیل شده' ? 'fa-trash' : status === 'در حال دانلود' ? 'fa-pause' : 'fa-play'}"></i>
+                        </button>
+                        ${status !== 'تکمیل شده' ? 
+                        `<button class="action-btn cancel" title="لغو">
+                            <i class="fas fa-times"></i>
+                        </button>` : ''}
+                    </div>
+                `;
+                
+                // افزودن رویداد به دکمه‌ها
+                const pauseBtn = item.querySelector('.pause, .remove');
+                const cancelBtn = item.querySelector('.cancel');
+                
+                if(pauseBtn) {
+                    pauseBtn.addEventListener('click', function() {
+                        const statusEl = item.querySelector('.status');
+                        const icon = this.querySelector('i');
+                        
+                        if(this.classList.contains('remove')) {
+                            item.remove();
+                            return;
+                        }
+                        
+                        if(statusEl.textContent === 'در حال دانلود') {
+                            statusEl.textContent = 'متوقف شده';
+                            icon.className = 'fas fa-play';
+                            this.title = 'ادامه';
+                        } else {
+                            statusEl.textContent = 'در حال دانلود';
+                            icon.className = 'fas fa-pause';
+                            this.title = 'توقف';
+                            simulateDownload(item);
+                        }
+                    });
+                }
+                
+                if(cancelBtn) {
+                    cancelBtn.addEventListener('click', function() {
+                        if(confirm('آیا از لغو این دانلود اطمینان دارید؟')) {
+                            item.remove();
+                        }
+                    });
+                }
+                
+                return item;
+            }
+            
+            // شبیه‌سازی فرآیند دانلود
+            function simulateDownload(item) {
+                const progressFill = item.querySelector('.progress-fill');
+                const progressText = item.querySelector('.progress-info > span');
+                const status = item.querySelector('.status');
+                const speedText = item.querySelector('.progress-info > span:last-child');
+                const downloadedText = item.querySelector('.speed-info > span:first-child');
+                const timeText = item.querySelector('.speed-info > span:last-child');
+                
+                if(status.textContent !== 'در حال دانلود') return;
+                
+                let progress = parseInt(progressFill.style.width);
+                if(progress >= 100) return;
+                
+                const sizeText = item.querySelector('.file-size').textContent;
+                const totalSize = parseSize(sizeText.split(': ')[1]);
+                
+                let speed = 0.5 + Math.random() * 4; // سرعت بین 0.5 تا 4.5 مگابایت بر ثانیه
+                speedText.textContent = speed.toFixed(1) + ' MB/s';
+                
+                const interval = setInterval(() => {
+                    if(progress >= 100 || status.textContent !== 'در حال دانلود') {
+                        clearInterval(interval);
+                        if(progress >= 100) {
+                            status.textContent = 'تکمیل شده';
+                            speedText.textContent = '0 MB/s';
+                            timeText.textContent = 'تکمیل شده در: ' + getCurrentDate();
+                            
+                            // تغییر دکمه به حذف
+                            const pauseBtn = item.querySelector('.pause');
+                            pauseBtn.className = 'action-btn remove';
+                            pauseBtn.title = 'حذف';
+                            pauseBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                            
+                            // حذف دکمه لغو
+                            const cancelBtn = item.querySelector('.cancel');
+                            if(cancelBtn) cancelBtn.remove();
+                        }
+                        return;
+                    }
+                    
+                    // افزایش پیشرفت
+                    progress += Math.random() * 5;
+                    if(progress > 100) progress = 100;
+                    
+                    // به‌روزرسانی UI
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = Math.floor(progress) + '%';
+                    
+                    // محاسبه مقدار دانلود شده
+                    const downloaded = totalSize * (progress/100);
+                    downloadedText.textContent = 'دانلود شده: ' + formatSize(downloaded);
+                    
+                    // محاسبه زمان باقیمانده
+                    const remaining = (100 - progress) * totalSize / (speed * 1024 * 1024);
+                    const minutes = Math.floor(remaining / 60);
+                    const seconds = Math.floor(remaining % 60);
+                    timeText.textContent = `زمان باقیمانده: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    // تغییر سرعت به صورت تصادفی
+                    speed = Math.max(0.5, speed + (Math.random() - 0.5) * 0.5);
+                    speedText.textContent = speed.toFixed(1) + ' MB/s';
+                    
+                }, 1000);
+            }
+            
+            // تابع تبدیل رشته حجم به بایت
+            function parseSize(sizeStr) {
+                const units = { 'B': 1, 'KB': 1024, 'MB': 1024*1024, 'GB': 1024*1024*1024 };
+                const [value, unit] = sizeStr.split(' ');
+                return parseFloat(value) * units[unit];
+            }
+            
+            // تابع تبدیل بایت به رشته قابل خواندن
+            function formatSize(bytes) {
+                if (bytes >= 1024*1024*1024) {
+                    return (bytes / (1024*1024*1024)).toFixed(1) + ' GB';
+                } else if (bytes >= 1024*1024) {
+                    return (bytes / (1024*1024)).toFixed(1) + ' MB';
+                } else if (bytes >= 1024) {
+                    return (bytes / 1024).toFixed(1) + ' KB';
+                } else {
+                    return bytes + ' B';
+                }
+            }
+            
+            // تعیین آیکون بر اساس پسوند فایل
+            function getFileIcon(ext) {
+                const icons = {
+                    'pdf': 'fas fa-file-pdf',
+                    'doc': 'fas fa-file-word',
+                    'docx': 'fas fa-file-word',
+                    'xls': 'fas fa-file-excel',
+                    'xlsx': 'fas fa-file-excel',
+                    'ppt': 'fas fa-file-powerpoint',
+                    'pptx': 'fas fa-file-powerpoint',
+                    'zip': 'fas fa-file-archive',
+                    'rar': 'fas fa-file-archive',
+                    '7z': 'fas fa-file-archive',
+                    'jpg': 'fas fa-file-image',
+                    'jpeg': 'fas fa-file-image',
+                    'png': 'fas fa-file-image',
+                    'gif': 'fas fa-file-image',
+                    'mp3': 'fas fa-file-audio',
+                    'wav': 'fas fa-file-audio',
+                    'mp4': 'fas fa-file-video',
+                    'avi': 'fas fa-file-video',
+                    'mov': 'fas fa-file-video',
+                    'exe': 'fas fa-cogs',
+                    'msi': 'fas fa-cogs'
+                };
+                
+                return icons[ext] || 'fas fa-file';
+            }
+            
+            // استخراج نام فایل از URL
+            function extractFilenameFromUrl(url) {
+                const path = url.split('/').pop();
+                return path.split('?')[0];
+            }
+            
+            // تولید حجم تصادفی
+            function getRandomSize() {
+                const sizes = ['KB', 'MB', 'GB'];
+                const unit = sizes[Math.floor(Math.random() * sizes.length)];
+                const value = unit === 'KB' ? (10 + Math.random() * 90).toFixed(0) : 
+                             unit === 'MB' ? (1 + Math.random() * 99).toFixed(1) : 
+                             (0.1 + Math.random() * 4.9).toFixed(1);
+                return value + ' ' + unit;
+            }
+            
+            // تاریخ جاری
+            function getCurrentDate() {
+                const now = new Date();
+                return `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')}`;
+            }
+        });
+    </script>
+</body>
+</html>
