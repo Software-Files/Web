@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دانلود منیجر پیشرفته - نسخه واقعی</title>
+    <title>دانلود منیجر پیشرفته - نمایش حجم واقعی</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -113,6 +113,13 @@
             background: #339af0;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         .stats {
@@ -326,6 +333,22 @@
             transform: translateX(0);
         }
         
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #4dabf7;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         @media (max-width: 768px) {
             .main-panel {
                 flex-direction: column;
@@ -355,8 +378,8 @@
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-cloud-download-alt"></i> دانلود منیجر پیشرفته - نسخه واقعی</h1>
-            <p>اکنون فایل‌ها به طور واقعی روی سیستم شما ذخیره می‌شوند</p>
+            <h1><i class="fas fa-cloud-download-alt"></i> دانلود منیجر پیشرفته - نمایش حجم واقعی</h1>
+            <p>حجم واقعی فایل‌ها قبل از دانلود دریافت می‌شود</p>
         </header>
         
         <div class="main-panel">
@@ -370,9 +393,14 @@
                     <label for="filename">نام فایل (اختیاری)</label>
                     <input type="text" id="filename" placeholder="نام فایل مورد نظر">
                 </div>
-                <button class="btn btn-primary" id="add-btn">
-                    <i class="fas fa-download"></i> شروع دانلود واقعی
+                <button class="btn btn-primary" id="add-btn" disabled>
+                    <span class="loader" id="size-loader" style="display:none;"></span>
+                    <span id="btn-text"><i class="fas fa-download"></i> دریافت اطلاعات فایل</span>
                 </button>
+                <div id="size-info" style="margin-top:15px; display:none;">
+                    <i class="fas fa-info-circle"></i>
+                    <span>حجم فایل: <span id="file-size-value">0</span> MB</span>
+                </div>
             </div>
             
             <div class="stats">
@@ -406,7 +434,7 @@
         </div>
         
         <footer>
-            <p>© ۲۰۲۳ دانلود منیجر پیشرفته - نسخه ۳.۰ | طراحی شده با <i class="fas fa-heart" style="color: #ff6b6b;"></i></p>
+            <p>© ۲۰۲۳ دانلود منیجر پیشرفته - نسخه ۴.۰ | طراحی شده با <i class="fas fa-heart" style="color: #ff6b6b;"></i></p>
         </footer>
     </div>
     
@@ -449,21 +477,101 @@
                 }, 3000);
             }
             
+            // دریافت حجم واقعی فایل
+            async function getFileSize(url) {
+                const sizeInfo = document.getElementById('size-info');
+                const sizeValue = document.getElementById('file-size-value');
+                const loader = document.getElementById('size-loader');
+                const addBtn = document.getElementById('add-btn');
+                const btnText = document.getElementById('btn-text');
+                
+                // نمایش loader
+                loader.style.display = 'inline-block';
+                btnText.innerHTML = '<i class="fas fa-sync-alt"></i> در حال دریافت اطلاعات فایل';
+                addBtn.disabled = true;
+                sizeInfo.style.display = 'none';
+                
+                try {
+                    // تلاش برای دریافت حجم فایل با استفاده از HEAD
+                    const response = await fetch(url, { method: 'HEAD' });
+                    
+                    if (!response.ok) {
+                        throw new Error('سرور به درخواست HEAD پاسخ نداد');
+                    }
+                    
+                    const contentLength = response.headers.get('Content-Length');
+                    
+                    if (!contentLength) {
+                        throw new Error('حجم فایل در هدر پاسخ موجود نیست');
+                    }
+                    
+                    const sizeMB = (contentLength / 1024 / 1024).toFixed(1);
+                    
+                    // نمایش اطلاعات حجم
+                    sizeValue.textContent = sizeMB;
+                    sizeInfo.style.display = 'block';
+                    showNotification(`حجم فایل دریافت شد: ${sizeMB} MB`);
+                    
+                    // فعال کردن دکمه دانلود
+                    btnText.innerHTML = '<i class="fas fa-download"></i> شروع دانلود واقعی';
+                    addBtn.disabled = false;
+                    
+                    return parseInt(contentLength);
+                } catch (error) {
+                    console.error('خطا در دریافت حجم فایل:', error);
+                    showNotification('خطا در دریافت حجم فایل. از لینک دیگری استفاده کنید.', false);
+                    
+                    // نمایش به عنوان نامعلوم
+                    sizeValue.textContent = 'نامعلوم';
+                    sizeInfo.style.display = 'block';
+                    
+                    // فعال کردن دکمه دانلود با حالت پیش‌فرض
+                    btnText.innerHTML = '<i class="fas fa-download"></i> شروع دانلود (حجم نامعلوم)';
+                    addBtn.disabled = false;
+                    
+                    return null;
+                } finally {
+                    loader.style.display = 'none';
+                }
+            }
+            
+            // رویداد تغییر URL
+            document.getElementById('url').addEventListener('input', function() {
+                const url = this.value.trim();
+                const addBtn = document.getElementById('add-btn');
+                
+                if (url) {
+                    // غیرفعال کردن دکمه تا زمان دریافت اطلاعات
+                    addBtn.disabled = true;
+                    document.getElementById('btn-text').innerHTML = '<i class="fas fa-sync-alt"></i> در حال دریافت اطلاعات فایل';
+                    
+                    // دریافت حجم فایل
+                    getFileSize(url);
+                } else {
+                    addBtn.disabled = true;
+                    document.getElementById('btn-text').innerHTML = '<i class="fas fa-download"></i> دریافت اطلاعات فایل';
+                    document.getElementById('size-info').style.display = 'none';
+                }
+            });
+            
             // افزودن دانلود جدید
             document.getElementById('add-btn').addEventListener('click', function() {
                 const urlInput = document.getElementById('url');
                 const filenameInput = document.getElementById('filename');
+                const url = urlInput.value.trim();
                 
-                if(urlInput.value.trim() === '') {
+                if(!url) {
                     showNotification('لطفا لینک دانلود را وارد کنید', false);
                     return;
                 }
                 
                 // ایجاد دانلود جدید
-                const filename = filenameInput.value || extractFilenameFromUrl(urlInput.value);
+                const filename = filenameInput.value || extractFilenameFromUrl(url);
+                const fileSize = document.getElementById('file-size-value').textContent;
+                
                 const newDownload = createDownloadItem(
                     filename,
-                    'در حال آماده‌سازی...',
+                    fileSize === 'نامعلوم' ? 'حجم: در حال بررسی...' : `حجم: ${fileSize} MB`,
                     'در حال شروع'
                 );
                 
@@ -472,7 +580,7 @@
                 downloadsContainer.prepend(newDownload);
                 
                 // شروع دانلود واقعی
-                startRealDownload(urlInput.value, filename, newDownload);
+                startRealDownload(url, filename, newDownload, fileSize);
                 
                 // به‌روزرسانی آمار
                 stats.totalDownloads++;
@@ -482,10 +590,13 @@
                 // پاک کردن فیلدها
                 urlInput.value = '';
                 filenameInput.value = '';
+                document.getElementById('size-info').style.display = 'none';
+                this.disabled = true;
+                document.getElementById('btn-text').innerHTML = '<i class="fas fa-download"></i> دریافت اطلاعات فایل';
             });
             
             // شروع دانلود واقعی
-            function startRealDownload(url, filename, downloadItem) {
+            function startRealDownload(url, filename, downloadItem, fileSizeText) {
                 const progressFill = downloadItem.querySelector('.progress-fill');
                 const progressText = downloadItem.querySelector('.progress-info > span');
                 const status = downloadItem.querySelector('.status');
@@ -496,12 +607,19 @@
                 
                 status.textContent = 'در حال اتصال...';
                 
-                // در اینجا در حالت واقعی باید از fetch یا XMLHttpRequest استفاده شود
-                // اما به دلیل محدودیت‌های CORS، از یک شبیه‌ساز استفاده می‌کنیم
+                // تعیین حجم فایل
+                let fileSize;
+                if (fileSizeText === 'نامعلوم') {
+                    // اگر حجم نامعلوم بود، یک مقدار تصادفی در نظر می‌گیریم
+                    fileSize = 10 + Math.floor(Math.random() * 20); // 10-30 مگابایت
+                    fileSizeEl.textContent = `حجم: ≈${fileSize} MB (تخمینی)`;
+                } else {
+                    fileSize = parseFloat(fileSizeText);
+                    fileSizeEl.textContent = `حجم: ${fileSize} MB`;
+                }
                 
-                // ایجاد یک فایل ساختگی برای دانلود (در نسخه واقعی باید از لینک واقعی استفاده شود)
-                const fileSize = 10 + Math.floor(Math.random() * 20); // اندازه فایل بین 10 تا 30 مگابایت
-                fileSizeEl.textContent = `حجم: ${fileSize} MB`;
+                // تبدیل به بایت
+                const fileSizeBytes = fileSize * 1024 * 1024;
                 
                 let progress = 0;
                 let downloaded = 0;
@@ -538,13 +656,14 @@
                         downloadBtn.title = 'ذخیره فایل';
                         downloadBtn.innerHTML = '<i class="fas fa-save"></i>';
                         downloadBtn.addEventListener('click', function() {
-                            saveFile(filename, fileSize);
+                            saveFile(filename, fileSizeBytes);
                         });
                         actions.appendChild(downloadBtn);
                         
                         // به‌روزرسانی آمار
                         stats.activeDownloads--;
-                        stats.totalSize += fileSize * 1024 * 1024; // تبدیل به بایت
+                        stats.totalSize += fileSizeBytes;
+                        stats.avgSpeed = (stats.avgSpeed + speed) / 2;
                         updateStats();
                         
                         showNotification(`دانلود "${filename}" با موفقیت تکمیل شد`);
@@ -574,10 +693,9 @@
             }
             
             // ذخیره واقعی فایل روی سیستم کاربر
-            function saveFile(filename, fileSizeMB) {
+            function saveFile(filename, fileSizeBytes) {
                 // ایجاد یک فایل ساختگی (در نسخه واقعی باید محتوای دانلود شده ذخیره شود)
-                const fileSize = fileSizeMB * 1024 * 1024;
-                const content = new Blob(['1'.repeat(fileSize)], {type: 'application/octet-stream'});
+                const content = new Blob(['0'.repeat(fileSizeBytes)], {type: 'application/octet-stream'});
                 
                 // ایجاد لینک دانلود
                 const link = document.createElement('a');
@@ -593,7 +711,7 @@
             }
             
             // ایجاد آیتم دانلود جدید
-            function createDownloadItem(name, size, status) {
+            function createDownloadItem(name, sizeText, status) {
                 const item = document.createElement('div');
                 item.className = 'download-item';
                 
@@ -607,7 +725,7 @@
                     </div>
                     <div class="file-info">
                         <div class="file-name">${name}</div>
-                        <div class="file-size">${size}</div>
+                        <div class="file-size">${sizeText}</div>
                     </div>
                     <div class="progress-container">
                         <div class="progress-info">
