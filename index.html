@@ -545,39 +545,173 @@
     <script>
         // کلاس مدیریت دانلود
         class DownloadManager {
-            constructor() {
-                this.downloads = JSON.parse(localStorage.getItem('downloads')) || [];
-                this.activeDownloads = {};
-                this.totalDownloads = parseInt(localStorage.getItem('totalDownloads')) || 0;
-                this.totalSize = parseInt(localStorage.getItem('totalSize')) || 0;
-                this.updateStats();
-                this.renderDownloads();
-                this.renderCompleted();
+    constructor() {
+        this.downloads = JSON.parse(localStorage.getItem('downloads')) || [];
+        this.activeDownloads = {};
+        this.totalDownloads = parseInt(localStorage.getItem('totalDownloads')) || 0;
+        this.totalSize = parseInt(localStorage.getItem('totalSize')) || 0;
+        this.updateStats();
+        this.renderDownloads();
+        this.renderCompleted();
+    }
+    
+    async checkInternetConnection() {
+        try {
+            await fetch('https://www.google.com', { mode: 'no-cors', timeout: 5000 });
+            return true;
+        } catch {
+            return false;
+        }
+    }
+    
+    isValidUrl(url) {
+        try {
+            new URL(url);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+    
+    async addDownload(url, name, type) {
+        if (!this.isValidUrl(url)) {
+            showNotification('آدرس URL نامعتبر است!', 'error');
+            return;
+        }
+        
+        const isOnline = await this.checkInternetConnection();
+        if (!isOnline) {
+            showNotification('اتصال اینترنت برقرار نیست!', 'error');
+            return;
+        }
+        
+        const id = Date.now().toString();
+        const download = {
+            id,
+            url,
+            name: name || url.split('/').pop(),
+            type,
+            status: 'downloading',
+            progress: 0,
+            size: 0,
+            speed: 0,
+            startTime: Date.now(),
+            chunks: []
+        };
+        
+        this.downloads.unshift(download);
+        this.save();
+        this.renderDownloads();
+        this.startDownload(download);
+    }
+    
+    async startDownload(download) {
+        try {
+            this.activeDownloads[download.id] = true;
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            
+            // استفاده از پروکسی اگر نیاز باشد
+            const useProxy = !download.url.startsWith('http://localhost') && 
+                           !download.url.startsWith('http://127.0.0.1');
+            const requestUrl = useProxy ? 
+                `https://cors-anywhere.herokuapp.com/${download.url}` : 
+                download.url;
+            
+            const response = await fetch(requestUrl, {
+                signal: controller.signal,
+                headers: useProxy ? { 'X-Requested-With': 'XMLHttpRequest' } : {}
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`خطا در دریافت فایل: ${response.status}`);
             }
             
-            // افزودن دانلود جدید
-            addDownload(url, name, type) {
-                const id = Date.now().toString();
-                const download = {
-                    id,
-                    url,
-                    name: name || url.split('/').pop(),
-                    type,
-                    status: 'downloading',
-                    progress: 0,
-                    size: 0,
-                    speed: 0,
-                    startTime: Date.now(),
-                    chunks: []
-                };
+            const contentLength = response.headers.get('Content-Length');
+            download.size = contentLength ? parseInt(contentLength) : 0;
+            this.save();
+            
+            const reader = response.body.getReader();
+            let receivedLength = 0;
+            let startTime = Date.now();
+            let lastUpdate = Date.now();
+            
+            while(true) {
+                if (!this.activeDownloads[download.id]) {
+                    download.status = 'paused';
+                    this.save();
+                    this.renderDownloads();
+                    return;
+                }
                 
-                this.downloads.unshift(download);
-                this.save();
-                this.renderDownloads();
+                const {done, value} = await reader.read();
                 
-                // شروع دانلود واقعی
-                this.startDownload(download);
+                if (done) {
+                    download.status = 'completed';
+                    download.progress = 100;
+                    download.endTime = Date.now();
+                    
+                    const blob = new Blob(download.chunks);
+                    download.blobUrl = URL.createObjectURL(blob);
+                    
+                    this.totalDownloads++;
+                    this.totalSize += download.size;
+                    localStorage.setItem('totalDownloads', this.totalDownloads);
+                    localStorage.setItem('totalSize', this.totalSize);
+                    
+                    this.save();
+                    this.renderDownloads();
+                    this.renderCompleted();
+                    this.updateStats();
+                    
+                    showNotification(`دانلود "${download.name}" با موفقیت تکمیل شد!`, 'success');
+                    break;
+                }
+                
+                download.chunks.push(value);
+                receivedLength += value.length;
+                
+                if (download.size) {
+                    download.progress = Math.round((receivedLength / download.size) * 100);
+                }
+                
+                const now = Date.now();
+                const timeDiff = (now - lastUpdate) / 1000;
+                
+                if (timeDiff > 0.5) {
+                    download.speed = Math.round(value.length / timeDiff / 1024);
+                    lastUpdate = now;
+                }
+                
+                this.updateDownloadItem(download.id);
             }
+        } catch (error) {
+            console.error('خطا در دانلود:', error);
+            download.status = 'error';
+            
+            let errorMessage = 'خطا در دانلود';
+            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                errorMessage = 'خطا در ارتباط با سرور. ممکن است فایل وجود نداشته باشد یا محدودیت CORS داشته باشد.';
+            } else if (error.message.includes('NetworkError')) {
+                errorMessage = 'مشکل در اتصال اینترنت. لطفاً ارتباط خود را بررسی کنید.';
+            } else if (error.name === 'AbortError') {
+                errorMessage = 'زمان درخواست به پایان رسید. سرور پاسخگو نبود.';
+            } else {
+                errorMessage = error.message;
+            }
+            
+            download.error = errorMessage;
+            this.save();
+            this.renderDownloads();
+            showNotification(errorMessage, 'error');
+        }
+    }
+    
+    // بقیه متدها بدون تغییر...
+}
             
             // شروع دانلود
             async startDownload(download) {
