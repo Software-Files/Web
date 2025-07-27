@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدیریت دانلود - دانلود منیجر</title>
+    <title>دانلود منیجر پیشرفته</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -137,6 +137,8 @@
             border-radius: 15px;
             padding: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-height: 600px;
+            overflow-y: auto;
         }
         
         .download-item {
@@ -210,6 +212,11 @@
             color: #f57c00;
         }
         
+        .status-error {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        
         .progress-container {
             margin: 15px 0;
         }
@@ -249,6 +256,8 @@
             display: flex;
             align-items: center;
             gap: 5px;
+            cursor: pointer;
+            border: none;
         }
         
         .btn-pause {
@@ -269,6 +278,11 @@
         .btn-delete {
             background-color: #f5f5f5;
             color: #757575;
+        }
+        
+        .btn-open {
+            background-color: #e8f5e9;
+            color: #388e3c;
         }
         
         .stats-section {
@@ -393,9 +407,37 @@
             margin-top: 40px;
             opacity: 0.8;
         }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background-color: #4b86b4;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background-color: #d32f2f;
+        }
+        
+        .notification.success {
+            background-color: #388e3c;
+        }
     </style>
 </head>
 <body>
+    <div class="notification" id="notification"></div>
+    
     <div class="container">
         <header>
             <h1><i class="fas fa-cloud-download-alt"></i> مدیریت دانلود پیشرفته</h1>
@@ -405,7 +447,7 @@
         <div class="main-content">
             <div class="download-section">
                 <h2 class="section-title"><i class="fas fa-plus-circle"></i> افزودن دانلود جدید</h2>
-                <form class="download-form">
+                <form class="download-form" id="download-form">
                     <div class="form-group">
                         <label for="file-url">آدرس فایل (URL)</label>
                         <input type="url" id="file-url" placeholder="https://example.com/file.zip" required>
@@ -428,104 +470,36 @@
                         </select>
                     </div>
                     
-                    <button type="button" class="btn btn-primary" id="start-download">
+                    <button type="submit" class="btn btn-primary" id="start-download">
                         <i class="fas fa-download"></i> شروع دانلود
                     </button>
                 </form>
+                
+                <div class="sample-links" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 10px; color: #2a4d69;">لینک‌های نمونه برای تست:</h3>
+                    <ul style="list-style: none; padding-right: 10px;">
+                        <li style="margin-bottom: 8px;">
+                            <a href="#" class="sample-link" data-url="https://download.samplelib.com/mp4/sample-5s.mp4" data-name="ویدئوی نمونه.mp4" data-type="video" style="color: #4b86b4; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-link"></i> ویدئوی نمونه (5 ثانیه)
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 8px;">
+                            <a href="#" class="sample-link" data-url="https://download.samplelib.com/png/sample-png-5mb.png" data-name="تصویر نمونه.png" data-type="image" style="color: #4b86b4; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-link"></i> تصویر نمونه (5 مگابایت)
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="sample-link" data-url="https://download.samplelib.com/pdf/sample-pdf-1mb.pdf" data-name="سند نمونه.pdf" data-type="document" style="color: #4b86b4; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-link"></i> سند نمونه (1 مگابایت)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
             
-            <div class="download-list">
+            <div class="download-list" id="download-list">
                 <h2 class="section-title"><i class="fas fa-list"></i> لیست دانلودها</h2>
-                
-                <div class="download-item">
-                    <div class="download-header">
-                        <div class="file-info">
-                            <div class="file-icon">
-                                <i class="fas fa-file-video"></i>
-                            </div>
-                            <div class="file-details">
-                                <h3>آموزش برنامه نویسی پیشرفته.mp4</h3>
-                                <p>اندازه: 850 مگابایت</p>
-                            </div>
-                        </div>
-                        <div class="download-status status-downloading">در حال دانلود</div>
-                    </div>
-                    
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress" style="width: 65%"></div>
-                        </div>
-                        <div class="progress-info">
-                            <span>65%</span>
-                            <span>552.5 مگابایت از 850 مگابایت</span>
-                        </div>
-                    </div>
-                    
-                    <div class="download-actions">
-                        <button class="btn-action btn-pause"><i class="fas fa-pause"></i> توقف</button>
-                        <button class="btn-action btn-cancel"><i class="fas fa-times"></i> لغو</button>
-                    </div>
-                </div>
-                
-                <div class="download-item">
-                    <div class="download-header">
-                        <div class="file-info">
-                            <div class="file-icon">
-                                <i class="fas fa-file-archive"></i>
-                            </div>
-                            <div class="file-details">
-                                <h3>پروژه نهایی.zip</h3>
-                                <p>اندازه: 420 مگابایت</p>
-                            </div>
-                        </div>
-                        <div class="download-status status-paused">متوقف شده</div>
-                    </div>
-                    
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress" style="width: 30%"></div>
-                        </div>
-                        <div class="progress-info">
-                            <span>30%</span>
-                            <span>126 مگابایت از 420 مگابایت</span>
-                        </div>
-                    </div>
-                    
-                    <div class="download-actions">
-                        <button class="btn-action btn-resume"><i class="fas fa-play"></i> ادامه</button>
-                        <button class="btn-action btn-cancel"><i class="fas fa-times"></i> لغو</button>
-                    </div>
-                </div>
-                
-                <div class="download-item">
-                    <div class="download-header">
-                        <div class="file-info">
-                            <div class="file-icon">
-                                <i class="fas fa-file-pdf"></i>
-                            </div>
-                            <div class="file-details">
-                                <h3>مقاله علمی.pdf</h3>
-                                <p>اندازه: 15 مگابایت</p>
-                            </div>
-                        </div>
-                        <div class="download-status status-completed">تکمیل شده</div>
-                    </div>
-                    
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress" style="width: 100%"></div>
-                        </div>
-                        <div class="progress-info">
-                            <span>100%</span>
-                            <span>15 مگابایت از 15 مگابایت</span>
-                        </div>
-                    </div>
-                    
-                    <div class="download-actions">
-                        <button class="btn-action"><i class="fas fa-folder-open"></i> باز کردن</button>
-                        <button class="btn-action btn-delete"><i class="fas fa-trash"></i> حذف</button>
-                    </div>
-                </div>
+                <!-- دانلودها به صورت پویا در اینجا اضافه می‌شوند -->
             </div>
         </div>
         
@@ -534,7 +508,7 @@
                 <div class="stat-icon">
                     <i class="fas fa-cloud-download-alt"></i>
                 </div>
-                <div class="stat-value">۱۲۷</div>
+                <div class="stat-value" id="total-downloads">0</div>
                 <div class="stat-title">دانلودهای انجام شده</div>
             </div>
             
@@ -542,7 +516,7 @@
                 <div class="stat-icon">
                     <i class="fas fa-database"></i>
                 </div>
-                <div class="stat-value">۸۴.۲ گیگابایت</div>
+                <div class="stat-value" id="total-size">0 مگابایت</div>
                 <div class="stat-title">حجم کل دانلودها</div>
             </div>
             
@@ -550,53 +524,15 @@
                 <div class="stat-icon">
                     <i class="fas fa-bolt"></i>
                 </div>
-                <div class="stat-value">۲.۴ مگابایت/ثانیه</div>
+                <div class="stat-value" id="avg-speed">0 کیلوبایت/ث</div>
                 <div class="stat-title">میانگین سرعت</div>
             </div>
         </div>
         
         <div class="completed-downloads">
             <h2 class="section-title completed-title"><i class="fas fa-check-circle"></i> آخرین دانلودهای تکمیل شده</h2>
-            <div class="completed-list">
-                <div class="completed-item">
-                    <div class="completed-icon">
-                        <i class="fas fa-music"></i>
-                    </div>
-                    <div class="completed-info">
-                        <h4>آلبوم موسیقی جدید</h4>
-                        <p>120 مگابایت</p>
-                    </div>
-                </div>
-                
-                <div class="completed-item">
-                    <div class="completed-icon">
-                        <i class="fas fa-image"></i>
-                    </div>
-                    <div class="completed-info">
-                        <h4>گالری تصاویر طبیعت</h4>
-                        <p>85 مگابایت</p>
-                    </div>
-                </div>
-                
-                <div class="completed-item">
-                    <div class="completed-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <div class="completed-info">
-                        <h4>کتاب الکترونیکی</h4>
-                        <p>8.5 مگابایت</p>
-                    </div>
-                </div>
-                
-                <div class="completed-item">
-                    <div class="completed-icon">
-                        <i class="fas fa-file-code"></i>
-                    </div>
-                    <div class="completed-info">
-                        <h4>پروژه برنامه نویسی</h4>
-                        <p>45 مگابایت</p>
-                    </div>
-                </div>
+            <div class="completed-list" id="completed-list">
+                <!-- دانلودهای تکمیل شده به صورت پویا در اینجا اضافه می‌شوند -->
             </div>
         </div>
         
@@ -607,19 +543,382 @@
     </div>
     
     <script>
-        // شبیه سازی دانلودها
-        document.getElementById('start-download').addEventListener('click', function() {
+        // کلاس مدیریت دانلود
+        class DownloadManager {
+            constructor() {
+                this.downloads = JSON.parse(localStorage.getItem('downloads')) || [];
+                this.activeDownloads = {};
+                this.totalDownloads = parseInt(localStorage.getItem('totalDownloads')) || 0;
+                this.totalSize = parseInt(localStorage.getItem('totalSize')) || 0;
+                this.updateStats();
+                this.renderDownloads();
+                this.renderCompleted();
+            }
+            
+            // افزودن دانلود جدید
+            addDownload(url, name, type) {
+                const id = Date.now().toString();
+                const download = {
+                    id,
+                    url,
+                    name: name || url.split('/').pop(),
+                    type,
+                    status: 'downloading',
+                    progress: 0,
+                    size: 0,
+                    speed: 0,
+                    startTime: Date.now(),
+                    chunks: []
+                };
+                
+                this.downloads.unshift(download);
+                this.save();
+                this.renderDownloads();
+                
+                // شروع دانلود واقعی
+                this.startDownload(download);
+            }
+            
+            // شروع دانلود
+            async startDownload(download) {
+                try {
+                    this.activeDownloads[download.id] = true;
+                    
+                    const response = await fetch(download.url);
+                    
+                    if (!response.ok) {
+                        throw new Error(`خطا در دریافت فایل: ${response.status}`);
+                    }
+                    
+                    // دریافت اندازه فایل
+                    const contentLength = response.headers.get('Content-Length');
+                    download.size = contentLength ? parseInt(contentLength) : 0;
+                    
+                    // ذخیره در localStorage
+                    this.save();
+                    
+                    // خواندن داده‌ها به صورت جریان
+                    const reader = response.body.getReader();
+                    let receivedLength = 0;
+                    let startTime = Date.now();
+                    let lastUpdate = Date.now();
+                    
+                    while(true) {
+                        if (!this.activeDownloads[download.id]) {
+                            download.status = 'paused';
+                            this.save();
+                            this.renderDownloads();
+                            return;
+                        }
+                        
+                        const {done, value} = await reader.read();
+                        
+                        if (done) {
+                            // اتمام دانلود
+                            download.status = 'completed';
+                            download.progress = 100;
+                            download.endTime = Date.now();
+                            
+                            // ساخت blob و لینک دانلود
+                            const blob = new Blob(download.chunks);
+                            download.blobUrl = URL.createObjectURL(blob);
+                            
+                            // به‌روزرسانی آمار
+                            this.totalDownloads++;
+                            this.totalSize += download.size;
+                            localStorage.setItem('totalDownloads', this.totalDownloads);
+                            localStorage.setItem('totalSize', this.totalSize);
+                            
+                            this.save();
+                            this.renderDownloads();
+                            this.renderCompleted();
+                            this.updateStats();
+                            
+                            // نمایش نوتیفیکیشن
+                            showNotification(`دانلود "${download.name}" با موفقیت تکمیل شد!`, 'success');
+                            break;
+                        }
+                        
+                        // افزودن chunk به آرایه
+                        download.chunks.push(value);
+                        receivedLength += value.length;
+                        
+                        // محاسبه پیشرفت
+                        if (download.size) {
+                            download.progress = Math.round((receivedLength / download.size) * 100);
+                        }
+                        
+                        // محاسبه سرعت
+                        const now = Date.now();
+                        const timeDiff = (now - lastUpdate) / 1000; // به ثانیه
+                        
+                        if (timeDiff > 0.5) {
+                            download.speed = Math.round(value.length / timeDiff / 1024);
+                            lastUpdate = now;
+                        }
+                        
+                        // به‌روزرسانی نمایش
+                        this.updateDownloadItem(download.id);
+                    }
+                } catch (error) {
+                    console.error('خطا در دانلود:', error);
+                    download.status = 'error';
+                    download.error = error.message;
+                    this.save();
+                    this.renderDownloads();
+                    showNotification(`خطا در دانلود: ${error.message}`, 'error');
+                }
+            }
+            
+            // به‌روزرسانی آیتم دانلود در رابط کاربری
+            updateDownloadItem(id) {
+                const download = this.downloads.find(d => d.id === id);
+                if (!download) return;
+                
+                const item = document.querySelector(`.download-item[data-id="${id}"]`);
+                if (item) {
+                    // به‌روزرسانی نوار پیشرفت
+                    const progressBar = item.querySelector('.progress');
+                    progressBar.style.width = `${download.progress}%`;
+                    
+                    // به‌روزرسانی اطلاعات
+                    const progressInfo = item.querySelector('.progress-info');
+                    if (download.size) {
+                        const downloadedMB = (download.size * download.progress / 100 / 1048576).toFixed(1);
+                        const totalMB = (download.size / 1048576).toFixed(1);
+                        progressInfo.innerHTML = `<span>${download.progress}%</span><span>${downloadedMB} مگابایت از ${totalMB} مگابایت</span>`;
+                    } else {
+                        const downloadedMB = (download.chunks.reduce((acc, chunk) => acc + chunk.length, 0) / 1048576).toFixed(1);
+                        progressInfo.innerHTML = `<span>${downloadedMB} مگابایت دریافت شده</span>`;
+                    }
+                    
+                    // به‌روزرسانی سرعت
+                    const speedSpan = item.querySelector('.speed');
+                    if (speedSpan) {
+                        speedSpan.textContent = `${download.speed} کیلوبایت/ثانیه`;
+                    }
+                    
+                    // به‌روزرسانی وضعیت
+                    const status = item.querySelector('.download-status');
+                    status.textContent = this.getStatusText(download.status);
+                    status.className = `download-status status-${download.status}`;
+                }
+            }
+            
+            // نمایش دانلودها
+            renderDownloads() {
+                const container = document.getElementById('download-list');
+                // فقط دانلودهای فعال (در حال دانلود یا متوقف شده)
+                const active = this.downloads.filter(d => d.status === 'downloading' || d.status === 'paused' || d.status === 'error');
+                
+                if (active.length === 0) {
+                    container.innerHTML = '<h2 class="section-title"><i class="fas fa-list"></i> لیست دانلودها</h2><p style="text-align:center;padding:20px;color:#666;">هیچ دانلود فعالی وجود ندارد</p>';
+                    return;
+                }
+                
+                let html = '<h2 class="section-title"><i class="fas fa-list"></i> لیست دانلودها</h2>';
+                
+                active.forEach(download => {
+                    const sizeMB = download.size ? (download.size / 1048576).toFixed(1) + ' مگابایت' : 'نامشخص';
+                    
+                    html += `
+                    <div class="download-item" data-id="${download.id}">
+                        <div class="download-header">
+                            <div class="file-info">
+                                <div class="file-icon">
+                                    <i class="fas fa-file-${this.getFileIcon(download.type)}"></i>
+                                </div>
+                                <div class="file-details">
+                                    <h3>${download.name}</h3>
+                                    <p>اندازه: ${sizeMB}</p>
+                                </div>
+                            </div>
+                            <div class="download-status status-${download.status}">${this.getStatusText(download.status)}</div>
+                        </div>
+                        
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${download.progress}%"></div>
+                            </div>
+                            <div class="progress-info">
+                                <span>${download.progress}%</span>
+                                <span class="speed">${download.speed} کیلوبایت/ثانیه</span>
+                            </div>
+                        </div>
+                        
+                        <div class="download-actions">
+                            ${download.status === 'downloading' ? 
+                                `<button class="btn-action btn-pause" onclick="downloadManager.pauseDownload('${download.id}')"><i class="fas fa-pause"></i> توقف</button>` : 
+                                (download.status === 'paused' ? 
+                                    `<button class="btn-action btn-resume" onclick="downloadManager.resumeDownload('${download.id}')"><i class="fas fa-play"></i> ادامه</button>` : 
+                                    '')
+                            }
+                            ${download.status === 'error' ? 
+                                `<button class="btn-action btn-resume" onclick="downloadManager.resumeDownload('${download.id}')"><i class="fas fa-redo"></i> تلاش مجدد</button>` : 
+                                `<button class="btn-action btn-cancel" onclick="downloadManager.cancelDownload('${download.id}')"><i class="fas fa-times"></i> لغو</button>`
+                            }
+                            ${download.status === 'completed' ? 
+                                `<a href="${download.blobUrl}" download="${download.name}" class="btn-action btn-open"><i class="fas fa-download"></i> ذخیره</a>` : 
+                                ''
+                            }
+                        </div>
+                    </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            }
+            
+            // نمایش دانلودهای تکمیل شده
+            renderCompleted() {
+                const container = document.getElementById('completed-list');
+                // فقط دانلودهای تکمیل شده (تا 4 مورد)
+                const completed = this.downloads.filter(d => d.status === 'completed').slice(0, 4);
+                
+                if (completed.length === 0) {
+                    container.innerHTML = '<p style="text-align:center;padding:20px;color:#666;">هیچ دانلود تکمیل شده‌ای وجود ندارد</p>';
+                    return;
+                }
+                
+                let html = '';
+                
+                completed.forEach(download => {
+                    const sizeMB = download.size ? (download.size / 1048576).toFixed(1) + ' مگابایت' : 'نامشخص';
+                    
+                    html += `
+                    <div class="completed-item">
+                        <div class="completed-icon">
+                            <i class="fas fa-file-${this.getFileIcon(download.type)}"></i>
+                        </div>
+                        <div class="completed-info">
+                            <h4>${download.name}</h4>
+                            <p>${sizeMB}</p>
+                        </div>
+                        <a href="${download.blobUrl}" download="${download.name}" class="btn-action" style="margin-left:auto;"><i class="fas fa-download"></i></a>
+                    </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            }
+            
+            // به‌روزرسانی آمار
+            updateStats() {
+                document.getElementById('total-downloads').textContent = this.totalDownloads;
+                document.getElementById('total-size').textContent = (this.totalSize / 1048576).toFixed(1) + ' مگابایت';
+                
+                // محاسبه میانگین سرعت (ساده)
+                const speeds = this.downloads
+                    .filter(d => d.status === 'completed' && d.speed > 0)
+                    .map(d => d.speed);
+                
+                const avgSpeed = speeds.length ? 
+                    Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 
+                    0;
+                
+                document.getElementById('avg-speed').textContent = avgSpeed + ' کیلوبایت/ث';
+            }
+            
+            // توقف دانلود
+            pauseDownload(id) {
+                this.activeDownloads[id] = false;
+                const download = this.downloads.find(d => d.id === id);
+                if (download) {
+                    download.status = 'paused';
+                    this.save();
+                    this.renderDownloads();
+                    showNotification(`دانلود "${download.name}" متوقف شد`, 'info');
+                }
+            }
+            
+            // ادامه دانلود
+            resumeDownload(id) {
+                const download = this.downloads.find(d => d.id === id);
+                if (download) {
+                    this.activeDownloads[id] = true;
+                    download.status = 'downloading';
+                    this.save();
+                    this.renderDownloads();
+                    this.startDownload(download);
+                    showNotification(`دانلود "${download.name}" ادامه یافت`, 'info');
+                }
+            }
+            
+            // لغو دانلود
+            cancelDownload(id) {
+                this.activeDownloads[id] = false;
+                this.downloads = this.downloads.filter(d => d.id !== id);
+                this.save();
+                this.renderDownloads();
+                showNotification('دانلود لغو شد', 'info');
+            }
+            
+            // ذخیره در localStorage
+            save() {
+                localStorage.setItem('downloads', JSON.stringify(this.downloads));
+            }
+            
+            // دریافت آیکون بر اساس نوع فایل
+            getFileIcon(type) {
+                const icons = {
+                    'video': 'video',
+                    'audio': 'music',
+                    'document': 'pdf',
+                    'archive': 'archive',
+                    'image': 'image'
+                };
+                return icons[type] || 'alt';
+            }
+            
+            // دریافت متن وضعیت
+            getStatusText(status) {
+                const texts = {
+                    'downloading': 'در حال دانلود',
+                    'paused': 'متوقف شده',
+                    'completed': 'تکمیل شده',
+                    'error': 'خطا'
+                };
+                return texts[status] || status;
+            }
+        }
+        
+        // نمایش نوتیفیکیشن
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification';
+            
+            if (type === 'error') {
+                notification.classList.add('error');
+            } else if (type === 'success') {
+                notification.classList.add('success');
+            }
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // ایجاد نمونه از دانلود منیجر
+        const downloadManager = new DownloadManager();
+        
+        // رویداد ارسال فرم
+        document.getElementById('download-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
             const url = document.getElementById('file-url').value;
-            const fileName = document.getElementById('file-name').value || url.split('/').pop();
+            const fileName = document.getElementById('file-name').value;
             const fileType = document.getElementById('file-type').value;
             
             if (!url) {
-                alert('لطفاً آدرس فایل را وارد کنید');
+                showNotification('لطفاً آدرس فایل را وارد کنید', 'error');
                 return;
             }
             
-            // نمایش پیام موفقیت
-            alert(`دانلود "${fileName}" شروع شد!`);
+            downloadManager.addDownload(url, fileName, fileType);
+            showNotification(`دانلود "${fileName || url.split('/').pop()}" شروع شد!`);
             
             // ریست کردن فرم
             document.getElementById('file-url').value = '';
@@ -627,67 +926,17 @@
             document.getElementById('file-type').value = 'other';
         });
         
-        // شبیه سازی پیشرفت دانلود اول
-        let progress = 65;
-        const progressBar = document.querySelector('.download-item:first-child .progress');
-        
-        function simulateDownload() {
-            if (progress < 100) {
-                progress += Math.floor(Math.random() * 5);
-                if (progress > 100) progress = 100;
+        // رویداد لینک‌های نمونه
+        document.querySelectorAll('.sample-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.getAttribute('data-url');
+                const name = this.getAttribute('data-name');
+                const type = this.getAttribute('data-type');
                 
-                progressBar.style.width = progress + '%';
-                document.querySelector('.download-item:first-child .progress-info span:first-child').textContent = progress + '%';
-                
-                const downloaded = (850 * progress / 100).toFixed(1);
-                document.querySelector('.download-item:first-child .progress-info span:last-child').textContent = 
-                    downloaded + ' مگابایت از 850 مگابایت';
-                
-                if (progress < 100) {
-                    setTimeout(simulateDownload, 1500);
-                } else {
-                    document.querySelector('.download-item:first-child .download-status').textContent = 'تکمیل شده';
-                    document.querySelector('.download-item:first-child .download-status').className = 'download-status status-completed';
-                    
-                    const actions = document.querySelector('.download-item:first-child .download-actions');
-                    actions.innerHTML = `
-                        <button class="btn-action"><i class="fas fa-folder-open"></i> باز کردن</button>
-                        <button class="btn-action btn-delete"><i class="fas fa-trash"></i> حذف</button>
-                    `;
-                }
-            }
-        }
-        
-        // شروع شبیه سازی پس از تاخیر
-        setTimeout(simulateDownload, 3000);
-        
-        // مدیریت رویدادهای دکمه‌ها
-        document.querySelectorAll('.btn-pause').forEach(button => {
-            button.addEventListener('click', function() {
-                const item = this.closest('.download-item');
-                const status = item.querySelector('.download-status');
-                status.textContent = 'متوقف شده';
-                status.className = 'download-status status-paused';
-                
-                const actions = item.querySelector('.download-actions');
-                actions.innerHTML = `
-                    <button class="btn-action btn-resume"><i class="fas fa-play"></i> ادامه</button>
-                    <button class="btn-action btn-cancel"><i class="fas fa-times"></i> لغو</button>
-                `;
-                
-                // اضافه کردن رویداد برای دکمه ادامه
-                actions.querySelector('.btn-resume').addEventListener('click', function() {
-                    const item = this.closest('.download-item');
-                    const status = item.querySelector('.download-status');
-                    status.textContent = 'در حال دانلود';
-                    status.className = 'download-status status-downloading';
-                    
-                    const actions = item.querySelector('.download-actions');
-                    actions.innerHTML = `
-                        <button class="btn-action btn-pause"><i class="fas fa-pause"></i> توقف</button>
-                        <button class="btn-action btn-cancel"><i class="fas fa-times"></i> لغو</button>
-                    `;
-                });
+                document.getElementById('file-url').value = url;
+                document.getElementById('file-name').value = name;
+                document.getElementById('file-type').value = type;
             });
         });
     </script>
